@@ -1,5 +1,6 @@
 declare type Todo = {
-    value: string;
+    title: string;
+    body: string;
     readonly id : number;
     checked: boolean;
     removed: boolean;

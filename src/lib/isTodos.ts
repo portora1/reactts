@@ -4,7 +4,8 @@ const isTodo = (arg: any): arg is Todo => {
         typeof arg === 'object' &&
         Object.keys(arg).length === 4 &&
         typeof arg.id === 'number' &&
-        typeof arg.value === 'string' &&
+        typeof arg.title === 'string' &&
+        typeof arg.body === 'string' &&
         typeof arg.checked === 'boolean' &&
         typeof arg.removed === 'boolean'
     );

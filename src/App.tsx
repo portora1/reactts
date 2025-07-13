@@ -1,15 +1,21 @@
 import localforage from 'localforage';
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { isTodos } from './lib/isTodos';
+import { Counter } from './Counter'
 
 // "Todo型"　の定義
 type Todo = {
   // プロパティ　value は文字列型
-  value: string;
+  title: string;
+  body: string;
   readonly id: number;
   // 完了/未完了を示すプロパティ
   checked: boolean;
   removed: boolean;
+};
+
+type GreetingProps = {
+  name: string;
 };
 
 type Filter = 'all' | 'checked' | 'unchecked' | 'removed';
@@ -17,6 +23,7 @@ type Filter = 'all' | 'checked' | 'unchecked' | 'removed';
 export const App = () => {
   // 初期値: 空文字列　''
   const [text, setText] = useState('');
+  const [body, setBody] = useState('');
   // 追加
   const [todos, setTodos] = useState<Todo[]>([]);
   // 追加
@@ -25,18 +32,24 @@ export const App = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setText(e.target.value);
   };
+  const handleExchange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBody(e.target.value);
+  };
 
   //todosステートを更新する関数
   const handleSubmit = () => {
     //何も入力されていなかったらリターン
-    if (!text) return;
+    if (!text &&!body) return;
     const newTodo: Todo = {
-      value: text,
+      title: text,
+      body: body,
       id: new Date().getTime(),
       // 初期値(todo 作成時)はfalse
       checked: false,
       removed: false, //←追加
     };
+    setText('');
+    setBody('');
     /**
      * 更新前のtodosステートを元に
      * スプレッド構文で展開した要素へ
@@ -45,6 +58,7 @@ export const App = () => {
     setTodos((todos) => [newTodo, ...todos]);
     // フォームへの入力をクリアする
     setText('');
+    setBody('');
       };    
   const handleTodo = <K extends keyof Todo, V extends Todo[K]>(
     id: number,
@@ -98,7 +112,7 @@ export const App = () => {
   useEffect(() => {
     localforage
     .getItem('todo-20200101')
-    .then((values) => isTodos(values) && setTodos(values));
+    .then((titles) => isTodos(titles) && setTodos(titles));
   },[]);
 
   // todosステートが更新されたら、その値を保存
@@ -106,10 +120,23 @@ export const App = () => {
   useEffect(() => {
     localforage.setItem('todo-20200101', todos);
   }, [todos]);
+  const Greeting: React.FC<GreetingProps> = ({ name }) => {
+    return <h1>Hello, {name}!</h1>;
+  };
+    // カウントが変化した時に呼ばれる関数
+    const handleCountChange = (newCount: number) =>{
+      console.log('カウントが変わりました:', newCount);
+    };
+ 
 
   return(
     <div>
       {/*e.target.value: string を Filter型にアサーションする*/}
+      <Greeting name="Taro" />
+      <h1>カウンターアプリ</h1>
+      <Counter initialCount={0}
+      onCountChange={handleCountChange}
+      />
       <select 
       defaultValue="all"
       onChange={(e) => handleFilter(e.target.value as Filter)}
@@ -141,6 +168,13 @@ export const App = () => {
           // onChage イベント（＝入力テキストの変化）を　text ステートに反映する
           onChange={(e) => handleChange(e)}
         />
+                <input
+          type="text"
+          // text ステートが持っている入力中テキストの値を valueとして表示
+          value={body}
+          // onChage イベント（＝入力テキストの変化）を　text ステートに反映する
+          onChange={(e) => handleExchange(e)}
+        />
         {/* 上に同じ*/}
         <input 
           type="submit"
@@ -149,6 +183,7 @@ export const App = () => {
       </form>
         )
       )}
+
       <ul>
         {filteredTodos.map((todo) =>{
           return (
@@ -162,8 +197,14 @@ export const App = () => {
             <input
             type="text"
             disabled={todo.checked || todo.removed}
-            value={todo.value}
-            onChange={(e) => handleTodo(todo.id, 'value', e.target.value)}
+            value={todo.title}
+            onChange={(e) => handleTodo(todo.id, 'title', e.target.value)}
+             />
+                       <input
+            type="text"
+            disabled={todo.checked || todo.removed}
+            value={todo.body}
+            onChange={(e) => handleTodo(todo.id, 'body', e.target.value)}
              />
              <button onClick={() => handleTodo(todo.id, 'removed', !todo.removed)}>
               {todo.removed ? '復元' : '削除'}
@@ -173,5 +214,8 @@ export const App = () => {
           })}
       </ul>
     </div>
+
   );
 };
+
+export default App;
